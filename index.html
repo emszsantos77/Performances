@@ -1,0 +1,2712 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JBS FRIOS - Performance Industrial Executive Dashboard</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bg-body: #0b0f19;
+            --bg-sidebar: #111827;
+            --bg-card: #1f2937;
+            --bg-card-hover: #374151;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --border-color: #374151;
+            --font-family: 'Inter', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-family);
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR FILTERS */
+        .sidebar {
+            width: 280px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            gap: 12px;
+            overflow-y: auto;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .brand-logo {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 800;
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .brand-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: 0.5px;
+        }
+
+        .brand-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .nav-tabs {
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px;
+            border-radius: 8px;
+            gap: 4px;
+        }
+
+        .nav-btn {
+            padding: 8px 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 8px;
+        }
+
+        .nav-btn.active {
+            background: var(--accent-blue);
+            color: white;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .filter-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .filter-hint {
+            font-size: 9px;
+            color: var(--accent-cyan);
+        }
+
+        .filter-select {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 6px;
+            border-radius: 6px;
+            font-size: 11px;
+            outline: none;
+            width: 100%;
+            height: 75px;
+        }
+
+        .filter-select option {
+            padding: 4px;
+            border-radius: 3px;
+        }
+
+        .filter-select option:checked {
+            background: var(--accent-blue) !important;
+            color: white;
+        }
+
+        .btn-reset {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            margin-top: auto;
+        }
+
+        .btn-reset:hover {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        /* MAIN CONTENT AREA */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 20px;
+            gap: 16px;
+        }
+
+        /* TOP CARDS SECTION */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover, .card.selected {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .card.selected::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .card-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-cyan);
+            font-size: 13px;
+        }
+
+        .card-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+        }
+
+        .badge-mom {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 10px;
+        }
+
+        .badge-mom.positive {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+        }
+
+        .badge-mom.negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+        }
+
+        /* GEO / PRODUTOS SUMMARY CARDS */
+        .geo-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+        }
+
+        .geo-sum-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .geo-sum-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .geo-sum-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .geo-sum-sub {
+            font-size: 10px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* CHARTS CONTAINER */
+        .chart-section {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sort-controls {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .sort-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .sort-btn:hover, .sort-btn.active {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 260px;
+            width: 100%;
+        }
+
+        .weekly-charts-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .weekly-chart-card {
+            min-width: 0;
+        }
+
+        .weekly-date-panel {
+            display: flex;
+            align-items: end;
+            gap: 10px;
+            flex-wrap: wrap;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .weekly-date-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 150px;
+        }
+
+        .weekly-date-field label {
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .weekly-date-field input {
+            color-scheme: dark;
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 7px 8px;
+            font-size: 11px;
+            outline: none;
+        }
+
+        .weekly-date-field input:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        .weekly-date-status {
+            color: var(--text-muted);
+            font-size: 10px;
+            margin-left: auto;
+            align-self: center;
+        }
+
+        .weekly-kpi-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .weekly-kpi {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .weekly-kpi-label {
+            color: var(--text-muted);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .weekly-kpi-value {
+            display: block;
+            font-size: 18px;
+            font-weight: 800;
+            margin-top: 5px;
+        }
+
+        .weekly-kpi-sub {
+            color: var(--text-muted);
+            font-size: 10px;
+            margin-top: 3px;
+        }
+
+        @media (max-width: 768px) {
+            .weekly-date-status { width: 100%; margin-left: 0; }
+            .weekly-kpi-strip { grid-template-columns: 1fr; }
+        }
+
+        .insight-box {
+            background: rgba(6, 182, 212, 0.08);
+            border: 1px solid rgba(6, 182, 212, 0.35);
+            border-left: 4px solid var(--accent-cyan);
+            border-radius: 10px;
+            padding: 16px;
+            color: var(--text-main);
+            line-height: 1.55;
+            font-size: 12px;
+        }
+
+        .insight-box strong {
+            color: var(--accent-cyan);
+        }
+
+        .insight-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px 18px;
+            margin-top: 10px;
+        }
+
+        .insight-line {
+            color: var(--text-main);
+            font-size: 11px;
+        }
+
+        .insight-line i {
+            color: var(--accent-cyan);
+            width: 16px;
+        }
+
+        .insight-action {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(6, 182, 212, 0.25);
+        }
+
+        @media (max-width: 768px) {
+            .insight-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 1200px) {
+            .weekly-charts-grid { grid-template-columns: 1fr; }
+        }
+
+        /* BOTTOM DUAL COLUMNS */
+        .dual-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .table-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            height: 380px;
+        }
+
+        .table-wrapper {
+            overflow-y: auto;
+            overflow-x: auto;
+            flex: 1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        th {
+            background-color: rgba(255, 255, 255, 0.03);
+            color: var(--text-muted);
+            padding: 8px 10px;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td {
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+        }
+
+        .progress-bar-bg {
+            background: rgba(255, 255, 255, 0.1);
+            height: 5px;
+            border-radius: 3px;
+            overflow: hidden;
+            width: 60px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+            border-radius: 3px;
+        }
+
+        /* TAB VIEWS STYLES */
+        .tab-view {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .tab-view.active {
+            display: flex;
+        }
+
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .status-red {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid var(--accent-red);
+        }
+
+        .status-yellow {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fde047;
+            border: 1px solid var(--accent-yellow);
+        }
+
+        .status-green {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+            border: 1px solid var(--accent-green);
+        }
+
+        .kpi-row-3m {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .kpi-box-3m {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* RESPONSIVENESS */
+        @media (max-width: 1200px) {
+            .cards-grid { grid-template-columns: repeat(3, 1fr); }
+            .dual-grid { grid-template-columns: 1fr; }
+            .geo-summary-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; overflow: auto; }
+            .sidebar { width: 100%; height: auto; }
+            .cards-grid { grid-template-columns: 1fr 1fr; }
+            .kpi-row-3m { grid-template-columns: 1fr; }
+            .geo-summary-grid { grid-template-columns: 1fr 1fr; }
+        }
+        /* FILTROS PESQUÁVEIS COM SELEÇÃO MÚLTIPLA */
+        .filter-group { position: relative; }
+        .filter-select { display: none !important; }
+        .ms-box {
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 7px 9px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-main);
+            cursor: pointer;
+            font-size: 11px;
+            user-select: none;
+        }
+        .ms-box:hover, .ms-box.is-open { border-color: var(--accent-cyan); }
+        .ms-box.is-active .ms-summary { color: var(--accent-cyan); font-weight: 700; }
+        .ms-summary {
+            min-width: 0;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .ms-caret { color: var(--text-muted); font-size: 10px; transition: transform .15s ease; }
+        .ms-box.is-open .ms-caret { transform: rotate(180deg); }
+        .ms-panel {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            min-width: 230px;
+            padding: 8px;
+            background: var(--bg-sidebar);
+            border: 1px solid var(--accent-blue);
+            border-radius: 6px;
+            z-index: 1000;
+        }
+        .ms-panel.is-open { display: flex; flex-direction: column; gap: 6px; }
+        .ms-search {
+            width: 100%;
+            padding: 7px 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-main);
+            outline: none;
+            font-size: 11px;
+        }
+        .ms-search:focus { border-color: var(--accent-cyan); }
+        .ms-actions { display: flex; gap: 6px; }
+        .ms-actions button {
+            flex: 1;
+            padding: 5px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 9px;
+            font-weight: 700;
+        }
+        .ms-actions button:hover { color: var(--text-main); border-color: var(--accent-cyan); }
+        .ms-list { max-height: 230px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+        .ms-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 5px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        .ms-item:hover { background: var(--bg-card-hover); }
+        .ms-item.hidden { display: none; }
+        .ms-check { width: 13px; color: var(--text-muted); text-align: center; }
+        .ms-item.is-selected .ms-check, .ms-item.is-selected .ms-text { color: var(--accent-cyan); }
+        .ms-item.is-selected .ms-text { font-weight: 700; }
+        .ms-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ms-count { color: var(--text-muted); text-align: right; font-size: 9px; }
+
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR FILTERS -->
+    <aside class="sidebar">
+        <div class="brand-header">
+            <div class="brand-logo">JBS</div>
+            <div>
+                <div class="brand-title">JBS FRIOS</div>
+                <div class="brand-subtitle">Executive Dashboard</div>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-btn active" id="btn-tab-geral" onclick="switchTab('geral')">
+                <i class="fa-solid fa-chart-pie"></i> Geral
+            </button>
+            <button class="nav-btn" id="btn-tab-geo" onclick="switchTab('geo')">
+                <i class="fa-solid fa-map-location-dot"></i> GeoPerformance
+            </button>
+            <button class="nav-btn" id="btn-tab-sem" onclick="switchTab('sem')">
+                <i class="fa-solid fa-chart-line"></i> Evolução Semanal
+            </button>
+            <button class="nav-btn" id="btn-tab-prod" onclick="switchTab('prod')">
+                <i class="fa-solid fa-box-open"></i> Análise de Produtos
+            </button>
+        </div>
+
+        <div class="filter-group">
+            <div class="filter-label"><span>Mês / Período</span><span class="filter-hint">Clique Direto</span></div>
+            <select id="flt-mes" class="filter-select" multiple></select>
+        </div>
+
+        <div class="filter-group">
+            <div class="filter-label"><span>Gerente</span><span class="filter-hint">Clique Direto</span></div>
+            <select id="flt-gerente" class="filter-select" multiple></select>
+        </div>
+
+        <div class="filter-group">
+            <div class="filter-label"><span>Supervisor</span><span class="filter-hint">Clique Direto</span></div>
+            <select id="flt-supervisor" class="filter-select" multiple></select>
+        </div>
+
+        <div class="filter-group">
+            <div class="filter-label"><span>Cidade</span><span class="filter-hint">Clique Direto</span></div>
+            <select id="flt-cidade" class="filter-select" multiple></select>
+        </div>
+
+        <div class="filter-group">
+            <div class="filter-label"><span>Fornecedor</span><span class="filter-hint">Clique Direto</span></div>
+            <select id="flt-fornecedor" class="filter-select" multiple></select>
+        </div>
+
+        <div class="filter-group">
+            <div class="filter-label"><span>Vendedor</span><span class="filter-hint">Clique Direto</span></div>
+            <select id="flt-vendedor" class="filter-select" multiple></select>
+        </div>
+
+        <div class="filter-group">
+            <div class="filter-label"><span>Subgrupo</span><span class="filter-hint">Clique Direto</span></div>
+            <select id="flt-subgrupo" class="filter-select" multiple></select>
+        </div>
+
+        <button class="btn-reset" onclick="resetFilters()">
+            <i class="fa-solid fa-filter-circle-xmark"></i> Limpar Filtros
+        </button>
+    </aside>
+
+    <!-- MAIN VIEW AREA -->
+    <main class="main-content">
+
+        <!-- TOP CARDS -->
+        <section class="cards-grid">
+            <div class="card selected" id="card-v_liq" onclick="selectMetric('v_liq')">
+                <div class="card-header">
+                    <span class="card-title">Média Fat. Líquido</span>
+                    <div class="card-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+                </div>
+                <div class="card-value" id="val-fat_liq">R$ 0,00</div>
+                <div class="card-footer">
+                    <span class="badge-mom positive" id="mom-fat_liq">+0.0% MoM</span>
+                </div>
+            </div>
+
+            <div class="card" id="card-pos" onclick="selectMetric('pos')">
+                <div class="card-header">
+                    <span class="card-title">Média Positivação</span>
+                    <div class="card-icon"><i class="fa-solid fa-users"></i></div>
+                </div>
+                <div class="card-value" id="val-pos">0</div>
+                <div class="card-footer">
+                    <span class="badge-mom positive" id="mom-pos">+0.0% MoM</span>
+                </div>
+            </div>
+
+            <div class="card" id="card-vol" onclick="selectMetric('vol')">
+                <div class="card-header">
+                    <span class="card-title">Média Volume (KG)</span>
+                    <div class="card-icon"><i class="fa-solid fa-weight-hanging"></i></div>
+                </div>
+                <div class="card-value" id="val-vol">0 KG</div>
+                <div class="card-footer">
+                    <span class="badge-mom positive" id="mom-vol">+0.0% MoM</span>
+                </div>
+            </div>
+
+            <div class="card" id="card-tkt" onclick="selectMetric('tkt')">
+                <div class="card-header">
+                    <span class="card-title">Média Ticket Médio</span>
+                    <div class="card-icon"><i class="fa-solid fa-receipt"></i></div>
+                </div>
+                <div class="card-value" id="val-tkt">R$ 0,00</div>
+                <div class="card-footer">
+                    <span class="badge-mom positive" id="mom-tkt">+0.0% MoM</span>
+                </div>
+            </div>
+
+            <div class="card" id="card-troca" onclick="selectMetric('troca')">
+                <div class="card-header">
+                    <span class="card-title">Média % Troca</span>
+                    <div class="card-icon"><i class="fa-solid fa-rotate"></i></div>
+                </div>
+                <div class="card-value" id="val-troca">0.0%</div>
+                <div class="card-footer">
+                    <span class="badge-mom negative" id="mom-troca">+0.0% MoM</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- VISÃO 1: DASHBOARD GERAL -->
+        <div id="view-geral" class="tab-view active">
+            <section class="chart-section">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="fa-solid fa-chart-column" style="color: var(--accent-cyan);"></i>
+                        <span id="chart-main-title">Evolução Mensal & % MoM - Faturamento Líquido</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartMain"></canvas>
+                </div>
+            </section>
+
+            <section class="dual-grid">
+                <div class="table-card">
+                    <div class="section-title">
+                        <i class="fa-solid fa-boxes-packing" style="color: var(--accent-blue);"></i>
+                        <span>Análise de Fornecedores</span>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Fornecedor</th>
+                                    <th>Média Fat. Mensal</th>
+                                    <th>Média Pos. Mensal</th>
+                                    <th>Cresc. Médio MoM</th>
+                                    <th>Representatividade</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-fornecedores"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="section-title">
+                        <i class="fa-solid fa-user-tie" style="color: var(--accent-green);"></i>
+                        <span>Análise de Vendedores</span>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Vendedor</th>
+                                    <th>Média Fat. Mensal</th>
+                                    <th>Média Pos. Mensal</th>
+                                    <th>Cresc. Médio MoM</th>
+                                    <th>Representatividade</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-vendedores"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- VISÃO 2: MAPA GEOPERFORMANCE -->
+        <div id="view-geo" class="tab-view">
+            <section class="geo-summary-grid" id="geo-summary"></section>
+
+            <section class="chart-section" style="height: auto;">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="fa-solid fa-map-location-dot" style="color: var(--accent-yellow);"></i>
+                        <span>Análise de GeoPerformance de Cidades (Meta: 1 cliente / 1.000 hab)</span>
+                    </div>
+                    <div class="sort-controls">
+                        <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Classificar por:</span>
+                        <button class="sort-btn active" id="btn-sort-potencial" onclick="sortGeoTable('potencial')">
+                            <i class="fa-solid fa-bolt"></i> Potencial
+                        </button>
+                        <button class="sort-btn" id="btn-sort-nome" onclick="sortGeoTable('nome')">
+                            <i class="fa-solid fa-arrow-down-a-z"></i> Nome A-Z
+                        </button>
+                        <button class="sort-btn" id="btn-sort-pop" onclick="sortGeoTable('pop')">
+                            <i class="fa-solid fa-users"></i> População
+                        </button>
+                        <button class="sort-btn" id="btn-sort-geo" onclick="sortGeoTable('geo')">
+                            <i class="fa-solid fa-percent"></i> % GeoPerf
+                        </button>
+                    </div>
+                </div>
+                <div class="table-wrapper" style="max-height: 520px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cidade</th>
+                                <th>População</th>
+                                <th>Potencial</th>
+                                <th>Média Positivação</th>
+                                <th>% Cresc. MoM</th>
+                                <th>% GeoPerformance</th>
+                                <th>Status / Farol</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-geo"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- VISÃO 3: EVOLUÇÃO SEMANAL -->
+        <div id="view-sem" class="tab-view">
+            <section class="chart-section">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="fa-solid fa-calendar-days" style="color: var(--accent-cyan);"></i>
+                        <span>Período da Evolução Semanal</span>
+                    </div>
+                    <span class="weekly-date-status" id="weekly-date-status">Últimos 90 dias disponíveis</span>
+                </div>
+                <div class="weekly-date-panel">
+                    <div class="weekly-date-field">
+                        <label for="weekly-start-date">Data inicial</label>
+                        <input id="weekly-start-date" type="date" onchange="onWeeklyDateChange()">
+                    </div>
+                    <div class="weekly-date-field">
+                        <label for="weekly-end-date">Data final</label>
+                        <input id="weekly-end-date" type="date" onchange="onWeeklyDateChange()">
+                    </div>
+                    <button class="sort-btn" type="button" onclick="resetWeeklyDates()">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Últimos 90 dias
+                    </button>
+                </div>
+            </section>
+
+            <section class="weekly-kpi-strip" id="weekly-comparison-kpis">
+                <div class="weekly-kpi">
+                    <span class="weekly-kpi-label">Faturamento</span>
+                    <span class="weekly-kpi-value" id="weekly-fat-growth">0,0%</span>
+                    <span class="weekly-kpi-sub" id="weekly-fat-period">Período selecionado vs 90 dias anteriores</span>
+                </div>
+                <div class="weekly-kpi">
+                    <span class="weekly-kpi-label">Positivação</span>
+                    <span class="weekly-kpi-value" id="weekly-pos-growth">0,0%</span>
+                    <span class="weekly-kpi-sub" id="weekly-pos-period">Período selecionado vs 90 dias anteriores</span>
+                </div>
+                <div class="weekly-kpi">
+                    <span class="weekly-kpi-label">Volume</span>
+                    <span class="weekly-kpi-value" id="weekly-vol-growth">0,0%</span>
+                    <span class="weekly-kpi-sub" id="weekly-vol-period">Período selecionado vs 90 dias anteriores</span>
+                </div>
+            </section>
+
+            <div class="weekly-charts-grid">
+                <section class="chart-section weekly-chart-card">
+                    <div class="section-title">
+                        <i class="fa-solid fa-sack-dollar" style="color: var(--accent-blue);"></i>
+                        <span>Evolução Semanal - Faturamento Líquido</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartSemFat"></canvas>
+                    </div>
+                </section>
+
+                <section class="chart-section weekly-chart-card">
+                    <div class="section-title">
+                        <i class="fa-solid fa-users" style="color: var(--accent-green);"></i>
+                        <span>Evolução Semanal - Positivação</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartSemPos"></canvas>
+                    </div>
+                </section>
+
+                <section class="chart-section weekly-chart-card">
+                    <div class="section-title">
+                        <i class="fa-solid fa-weight-hanging" style="color: var(--accent-purple);"></i>
+                        <span>Evolução Semanal - Volume</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartSemVol"></canvas>
+                    </div>
+                </section>
+            </div>
+
+            <section class="insight-box" id="weekly-insight">
+                <strong><i class="fa-solid fa-lightbulb"></i> Insight da análise filtrada:</strong>
+                Aguardando o carregamento dos dados.
+            </section>
+
+            <section class="kpi-row-3m">
+                <div class="kpi-box-3m">
+                    <div class="section-title" style="color: var(--accent-green);">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>CNPJ / CPF Novos Positivados (Últimos 3 Meses vs 3 Meses Anteriores)</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                        <div>
+                            <div style="font-size: 24px; font-weight: 800; color: var(--accent-green);" id="val-novos-3m">0</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">Novos clientes nos últimos 3 meses</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 18px; font-weight: 700; color: var(--text-main);" id="val-prev-3m">0</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">3 Meses Anteriores</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="kpi-box-3m">
+                    <div class="section-title" style="color: var(--accent-red);">
+                        <i class="fa-solid fa-user-minus"></i>
+                        <span>CNPJ / CPF Deixaram de Comprar (Inativos / Churn)</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                        <div>
+                            <div style="font-size: 24px; font-weight: 800; color: var(--accent-red);" id="val-churn">0</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">Clientes inativos (sem compras no período recente)</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 18px; font-weight: 700; color: var(--accent-yellow);" id="val-churn-pct">0.0%</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">Taxa de Inatividade Geral</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- VISÃO 4: ANÁLISE DE PRODUTOS -->
+        <div id="view-prod" class="tab-view">
+            <section class="geo-summary-grid" id="prod-summary"></section>
+
+            <section class="chart-section" style="height: auto;">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="fa-solid fa-ranking-star" style="color: var(--accent-purple);"></i>
+                        <span>Ranking de Produtos - Curva ABC (Pareto 80/95 sobre Faturamento)</span>
+                    </div>
+                    <div class="sort-controls">
+                        <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Filtrar curva:</span>
+                        <button class="sort-btn active" id="btn-curve-todas" onclick="setProdCurveFilter('todas')">
+                            <i class="fa-solid fa-list"></i> Todas
+                        </button>
+                        <button class="sort-btn" id="btn-curve-A" onclick="setProdCurveFilter('A')">
+                            Curva A
+                        </button>
+                        <button class="sort-btn" id="btn-curve-B" onclick="setProdCurveFilter('B')">
+                            Curva B
+                        </button>
+                        <button class="sort-btn" id="btn-curve-C" onclick="setProdCurveFilter('C')">
+                            Curva C
+                        </button>
+                    </div>
+                </div>
+                <div class="table-wrapper" style="max-height: 520px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Produto</th>
+                                <th>Curva</th>
+                                <th>Média Fat. Mensal</th>
+                                <th>Média Positivação</th>
+                                <th>Média Qtd. Mensal</th>
+                                <th>Cresc. MoM Qtd</th>
+                                <th>Representatividade</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-produtos"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <script>
+        let rawData = [];
+        let populationsCsvIndex = {};
+        let populationsIbgeDiretoIndex = null; // índice UF-aware consultado direto do SIDRA
+        let populationsJsonIndex = {};         // fallback: populações embutidas nos JSONs
+        let dominantUfGlobal = '';
+        let filteredData = [];
+        let currentTab = 'geral';
+        let selectedMetric = 'v_liq';
+        let geoSortBy = 'potencial';
+        let chartInstance = null;
+        let chartSemFatInstance = null;
+        let chartSemPosInstance = null;
+        let chartSemVolInstance = null;
+
+        // Produtos
+        let produtosCurveFilter = 'todas';
+        let currentProdList = [];
+
+        // Todas as cidades atendidas são da Bahia: homônimos resolvem para BA.
+        const UF_PADRAO = 'ba';
+
+        const UFS_VALIDAS = new Set([
+            'ac', 'al', 'am', 'ap', 'ba', 'ce', 'df', 'es', 'go', 'ma', 'mg', 'ms',
+            'mt', 'pa', 'pb', 'pe', 'pi', 'pr', 'rj', 'rn', 'ro', 'rr', 'rs',
+            'sc', 'se', 'sp', 'to'
+        ]);
+
+        function parsePopulationNumber(value) {
+            let text = String(value ?? '').trim().replace(/\s/g, '');
+            if (!text) return 0;
+
+            if (text.includes('.') && text.includes(',')) {
+                text = text.replace(/\./g, '').replace(',', '.');
+            } else if (text.includes(',')) {
+                text = text.replace(',', '.');
+            } else if (/^\d{1,3}(\.\d{3})+$/.test(text)) {
+                text = text.replace(/\./g, '');
+            }
+
+            const numberValue = Number(text);
+            return Number.isFinite(numberValue) ? Math.round(numberValue) : 0;
+        }
+
+        function parsePopulationCsv(csvText) {
+            const result = {};
+            const lines = csvText
+                .replace(/\r/g, '')
+                .split('\n')
+                .map(line => line.trim())
+                .filter(Boolean);
+
+            if (lines.length < 2) return result;
+
+            const delimiter = lines[0].includes(';') ? ';' : ',';
+            const headers = lines[0].split(delimiter).map(header =>
+                header.replace(/^\uFEFF/, '').trim().toLowerCase()
+            );
+
+            const cityIndex = headers.findIndex(header =>
+                ['cidade', 'municipio', 'município', 'nome', 'nome_municipio', 'nome município'].includes(header)
+            );
+            const populationIndex = headers.findIndex(header =>
+                ['populacao', 'população', 'pop', 'habitantes'].includes(header)
+            );
+
+            if (cityIndex === -1 || populationIndex === -1) {
+                console.error('populacoes.csv precisa ter as colunas cidade e populacao.');
+                return result;
+            }
+
+            for (let i = 1; i < lines.length; i++) {
+                const columns = lines[i].split(delimiter);
+                const city = String(columns[cityIndex] || '').trim();
+                const population = parsePopulationNumber(columns[populationIndex]);
+                // Mantém o nome como está (incluindo UF, se houver) para o
+                // índice conseguir separar homônimos como "RUY BARBOSA (BA)".
+                if (city && population > 0) result[city] = population;
+            }
+
+            return result;
+        }
+
+        async function loadPopulationCsv() {
+            try {
+                const response = await fetch('populacoes.csv', { cache: 'no-store' });
+                if (!response.ok) {
+                    console.warn('populacoes.csv não foi encontrado na mesma pasta do HTML.');
+                    return {};
+                }
+
+                const csvText = await response.text();
+                const csvData = parsePopulationCsv(csvText);
+                console.log('Cidades carregadas do populacoes.csv:', Object.keys(csvData).length);
+                return csvData;
+            } catch (error) {
+                console.error('Erro ao carregar populacoes.csv:', error);
+                return {};
+            }
+        }
+
+        // Consulta a estimativa populacional do IBGE (SIDRA t/6579) direto no
+        // navegador. Cada município vem com a UF no nome ("Ruy Barbosa - BA"),
+        // então homônimos ficam separados e resolvemos para a UF padrão (BA).
+        async function loadIbgeDireto() {
+            try {
+                const response = await fetch(
+                    'https://apisidra.ibge.gov.br/values/t/6579/n6/all/v/all/p/last%201?formato=json',
+                    { cache: 'no-store' }
+                );
+
+                if (!response.ok) {
+                    console.warn('SIDRA/IBGE respondeu', response.status, '- usando populações dos JSONs.');
+                    return null;
+                }
+
+                const rows = await response.json();
+                const map = {};
+
+                for (const row of rows) {
+                    const nome = row.D1N;
+                    const valor = parsePopulationNumber(row.V);
+                    if (!nome || !(valor > 0)) continue; // descarta a linha de cabeçalho
+                    map[nome] = valor;
+                }
+
+                console.log('IBGE (SIDRA) consultado direto:', Object.keys(map).length, 'municípios.');
+                return map;
+            } catch (error) {
+                console.warn('Sem acesso ao SIDRA/IBGE pelo navegador - usando populações dos JSONs.', error);
+                return null;
+            }
+        }
+
+        async function loadDashboardData() {
+            try {
+                // Carrega o arquivo principal e todas as partes existentes.
+                // O loop continua mesmo quando uma parte não existe.
+                const parts = ['dashboard_data.json'];
+
+                for (let i = 2; i <= 100; i++) {
+                    parts.push(`dashboard_data_part${i}.json`);
+                }
+
+                // Inicia a consulta ao IBGE em paralelo ao carregamento dos JSONs.
+                const ibgeDiretoPromise = loadIbgeDireto();
+
+                const allRecords = [];
+                const popMap = {};
+                let filtrosObj = null;
+                const arquivosCarregados = [];
+
+                for (const file of parts) {
+                    try {
+                        const res = await fetch(file, {
+                            cache: 'no-store'
+                        });
+
+                        if (!res.ok) continue;
+
+                        const json = await res.json();
+
+                        if (Array.isArray(json.dados)) {
+                            allRecords.push(...json.dados);
+                        }
+
+                        if (json.populacoes) {
+                            Object.assign(popMap, json.populacoes);
+                        }
+
+                        if (json.filtros && !filtrosObj) {
+                            filtrosObj = json.filtros;
+                        }
+
+                        arquivosCarregados.push(file);
+                    } catch (erroArquivo) {
+                        console.warn(
+                            `Não foi possível carregar ${file}:`,
+                            erroArquivo
+                        );
+                    }
+                }
+
+                rawData = allRecords;
+
+                // UF mais frequente entre as cidades dos dados — usada apenas
+                // como fallback de desempate (a preferência fixa é a UF_PADRAO).
+                const ufCounts = {};
+                rawData.forEach(registro => {
+                    if (!registro.cid) return;
+                    const { uf } = splitCityUf(registro.cid);
+                    if (uf) ufCounts[uf] = (ufCounts[uf] || 0) + 1;
+                });
+                const ufOrdenadas = Object.entries(ufCounts).sort((a, b) => b[1] - a[1]);
+                dominantUfGlobal = ufOrdenadas.length ? ufOrdenadas[0][0] : '';
+
+                populationsJsonIndex = indexPopulations(popMap);
+                populationsCsvIndex = indexPopulations(await loadPopulationCsv());
+
+                const ibgeDiretoMap = await ibgeDiretoPromise;
+                populationsIbgeDiretoIndex = ibgeDiretoMap ? indexPopulations(ibgeDiretoMap) : null;
+
+                // DIAGNÓSTICO 1: cidades que não casaram com o populacoes.csv.
+                const cidadesUnicas = [...new Set(rawData.map(d => d.cid).filter(Boolean))];
+                const semCsv = cidadesUnicas.filter(cid => {
+                    const { city } = splitCityUf(cid);
+                    const entradas = populationsCsvIndex[city];
+                    return !entradas || entradas.length === 0;
+                });
+                console.log(
+                    `Populações: ${cidadesUnicas.length - semCsv.length} de ` +
+                    `${cidadesUnicas.length} cidades casaram com o populacoes.csv.`
+                );
+                if (semCsv.length) {
+                    console.warn(
+                        'Cidades SEM correspondência no populacoes.csv ' +
+                        '(usarão IBGE/JSON ou 12.500):',
+                        semCsv
+                    );
+                }
+
+                // DIAGNÓSTICO 2: homônimos no IBGE (mesmo nome, UFs diferentes).
+                if (populationsIbgeDiretoIndex) {
+                    const conflitos = Object.entries(populationsIbgeDiretoIndex)
+                        .filter(([, entradas]) => entradas.length > 1)
+                        .map(([base, entradas]) =>
+                            `${base.toUpperCase()} -> ` +
+                            entradas
+                                .map(e => `${e.uf.toUpperCase()}: ${e.pop.toLocaleString('pt-BR')} hab`)
+                                .join(' | ') +
+                            ` => usando ${UF_PADRAO.toUpperCase()}`
+                        );
+
+                    if (conflitos.length) {
+                        console.warn(
+                            'Cidades com mesmo nome em UFs diferentes. ' +
+                            'Resolvidas automaticamente para a UF padrão (' +
+                            `${UF_PADRAO.toUpperCase()}). Para fixar outro valor, use o populacoes.csv:`,
+                            conflitos
+                        );
+                    }
+                }
+
+                // DIAGNÓSTICO 3: campos de produto/quantidade nos JSONs.
+                const temProd = rawData.some(d => d.prod);
+                const temQtd = rawData.some(d => d.qtd !== undefined && d.qtd !== null);
+                console.log(
+                    `Produtos: campo 'prod' ${temProd ? 'encontrado' : 'AUSENTE'} | ` +
+                    `campo 'qtd' ${temQtd ? 'encontrado' : 'AUSENTE'}.`
+                );
+                if (!temProd) {
+                    console.warn(
+                        'A aba Análise de Produtos precisa dos campos "prod" e "qtd". ' +
+                        'Rode o Python atualizado para regenerar os JSONs.'
+                    );
+                }
+
+                const mesesEncontrados = [
+                    ...new Set(
+                        rawData
+                            .map(registro => registro.dt)
+                            .filter(Boolean)
+                    )
+                ].sort();
+
+                console.log(
+                    'Arquivos JSON carregados:',
+                    arquivosCarregados
+                );
+
+                console.log(
+                    'Total de registros carregados:',
+                    rawData.length
+                );
+
+                console.log(
+                    'Meses carregados:',
+                    mesesEncontrados
+                );
+
+                if (rawData.length === 0) {
+                    throw new Error(
+                        'Nenhum registro foi carregado dos arquivos JSON.'
+                    );
+                }
+
+                populateFilterSelects(filtrosObj);
+                initSearchableFilters();
+                applyFilters();
+            } catch (err) {
+                console.error(
+                    'Erro ao carregar dados:',
+                    err
+                );
+            }
+        }
+
+        // Os selects continuam sendo a fonte de verdade dos filtros.
+        // A interface visual é criada por initSearchableFilters() no final do arquivo.
+
+        function populateFilterSelects(filtros) {
+            if(!filtros) return;
+            const map = {
+                'flt-mes': filtros.meses,
+                'flt-gerente': filtros.gerentes,
+                'flt-supervisor': filtros.supervisores,
+                'flt-cidade': filtros.cidades || [],
+                'flt-fornecedor': filtros.fornecedores || [],
+                'flt-vendedor': filtros.vendedores || [],
+                'flt-subgrupo': filtros.subgrupos || []
+            };
+
+            for (let id in map) {
+                let el = document.getElementById(id);
+                el.innerHTML = '';
+                map[id].forEach(opt => {
+                    let o = document.createElement('option');
+                    o.value = opt;
+                    o.innerText = opt;
+                    el.appendChild(o);
+                });
+            }
+        }
+
+        function getSelectedValues(selectId) {
+            let el = document.getElementById(selectId);
+            return Array.from(el.selectedOptions).map(option => option.value);
+        }
+
+        function applyFilters() {
+            let meses = getSelectedValues('flt-mes');
+            let gerentes = getSelectedValues('flt-gerente');
+            let sups = getSelectedValues('flt-supervisor');
+            let cidades = getSelectedValues('flt-cidade');
+            let forns = getSelectedValues('flt-fornecedor');
+            let vends = getSelectedValues('flt-vendedor');
+            let subs = getSelectedValues('flt-subgrupo');
+
+            filteredData = rawData.filter(d => {
+                if(meses.length > 0 && !meses.includes(d.dt)) return false;
+                if(gerentes.length > 0 && !gerentes.includes(d.ger)) return false;
+                if(sups.length > 0 && !sups.includes(d.sup)) return false;
+                if(cidades.length > 0 && !cidades.includes(d.cid)) return false;
+                if(forns.length > 0 && !forns.includes(d.forn)) return false;
+                if(vends.length > 0 && !vends.includes(d.vend)) return false;
+                if(subs.length > 0 && !subs.includes(d.sub)) return false;
+                return true;
+            });
+
+            if (typeof syncSearchableFilters === 'function') syncSearchableFilters();
+            renderDashboard();
+        }
+
+        function resetFilters() {
+            ['flt-mes', 'flt-gerente', 'flt-supervisor', 'flt-cidade', 'flt-fornecedor', 'flt-vendedor', 'flt-subgrupo'].forEach(id => {
+                let el = document.getElementById(id);
+                for (let i = 0; i < el.options.length; i++) {
+                    el.options[i].selected = false;
+                }
+            });
+            document.getElementById('weekly-start-date').value = '';
+            document.getElementById('weekly-end-date').value = '';
+            applyFilters();
+        }
+
+        function renderDashboard() {
+            let monthGroups = {};
+            filteredData.forEach(d => {
+                if(!monthGroups[d.dt]) {
+                    monthGroups[d.dt] = {
+                        dt: d.dt,
+                        m_nome: d.m_nome,
+                        fat_bruto: 0, dev: 0, v_liq: 0,
+                        p_liq: 0, troca: 0, clis: new Set()
+                    };
+                }
+                monthGroups[d.dt].fat_bruto += d.v_bruto;
+                monthGroups[d.dt].dev += d.dev;
+                monthGroups[d.dt].v_liq += d.v_liq;
+                monthGroups[d.dt].p_liq += d.p_liq;
+                monthGroups[d.dt].troca += d.v_troca;
+                if(d.cli) monthGroups[d.dt].clis.add(d.cli);
+            });
+
+            let monthsSorted = Object.keys(monthGroups).sort();
+            let monthlyMetrics = monthsSorted.map(m => {
+                let g = monthGroups[m];
+                let pos = g.clis.size;
+                let tkt = pos > 0 ? g.v_liq / pos : 0;
+                let pct_troca = g.fat_bruto > 0 ? (g.troca / g.fat_bruto) * 100 : 0;
+                return {
+                    dt: m,
+                    m_nome: g.m_nome,
+                    v_liq: g.v_liq,
+                    pos: pos,
+                    vol: g.p_liq,
+                    tkt: tkt,
+                    troca: pct_troca
+                };
+            });
+
+            updateCards(monthlyMetrics);
+            renderMainChart(monthlyMetrics);
+            renderRepresentatividade(monthsSorted);
+            renderGeoPerformance(monthsSorted);
+            renderProdutos(monthsSorted);
+            renderEvolucaoSemanal();
+        }
+
+        function updateCards(monthlyMetrics) {
+            let n = monthlyMetrics.length;
+            if(n === 0) {
+                ['val-fat_liq', 'val-pos', 'val-vol', 'val-tkt', 'val-troca'].forEach(id => document.getElementById(id).innerText = '-');
+                return;
+            }
+
+            let avg_v_liq = monthlyMetrics.reduce((a,b) => a + b.v_liq, 0) / n;
+            let avg_pos = monthlyMetrics.reduce((a,b) => a + b.pos, 0) / n;
+            let avg_vol = monthlyMetrics.reduce((a,b) => a + b.vol, 0) / n;
+            let avg_tkt = monthlyMetrics.reduce((a,b) => a + b.tkt, 0) / n;
+            let avg_troca = monthlyMetrics.reduce((a,b) => a + b.troca, 0) / n;
+
+            document.getElementById('val-fat_liq').innerText = formatCurr(avg_v_liq);
+            document.getElementById('val-pos').innerText = Math.round(avg_pos).toLocaleString('pt-BR');
+            document.getElementById('val-vol').innerText = formatNum(avg_vol) + " KG";
+            document.getElementById('val-tkt').innerText = formatCurr(avg_tkt);
+            document.getElementById('val-troca').innerText = avg_troca.toFixed(2) + "%";
+
+            // O card mostra o MoM real do último mês contra o mês imediatamente anterior.
+            // Isso evita misturar média de percentuais com crescimento acumulado.
+            let mom_v_liq = calcLatestMoM(monthlyMetrics, 'v_liq');
+            let mom_pos = calcLatestMoM(monthlyMetrics, 'pos');
+            let mom_vol = calcLatestMoM(monthlyMetrics, 'vol');
+            let mom_tkt = calcLatestMoM(monthlyMetrics, 'tkt');
+            let mom_troca = calcLatestMoM(monthlyMetrics, 'troca');
+
+            setMoMBadge('mom-fat_liq', mom_v_liq);
+            setMoMBadge('mom-pos', mom_pos);
+            setMoMBadge('mom-vol', mom_vol);
+            setMoMBadge('mom-tkt', mom_tkt);
+            setMoMBadge('mom-troca', mom_troca, true);
+        }
+
+        function calcLatestMoM(metrics, key) {
+            if (!metrics || metrics.length < 2) return 0;
+
+            const previous = Number(metrics[metrics.length - 2][key]) || 0;
+            const current = Number(metrics[metrics.length - 1][key]) || 0;
+
+            if (previous === 0) return 0;
+            return ((current - previous) / Math.abs(previous)) * 100;
+        }
+
+        function calcLatestMoMFromList(values) {
+            if (!values || values.length < 2) return 0;
+
+            const previous = Number(values[values.length - 2]) || 0;
+            const current = Number(values[values.length - 1]) || 0;
+
+            if (previous === 0) return 0;
+            return ((current - previous) / Math.abs(previous)) * 100;
+        }
+
+        function calcPeriodGrowth(values) {
+            if (!values || values.length < 2) return 0;
+
+            const first = Number(values[0]) || 0;
+            const last = Number(values[values.length - 1]) || 0;
+
+            if (first === 0) return 0;
+            return ((last - first) / Math.abs(first)) * 100;
+        }
+
+        function setMoMBadge(id, val, invert=false) {
+            let el = document.getElementById(id);
+            let isPositive = val >= 0;
+            if(invert) isPositive = !isPositive;
+
+            el.className = `badge-mom ${isPositive ? 'positive' : 'negative'}`;
+            el.innerText = `${val >= 0 ? '+' : ''}${val.toFixed(1)}% MoM`;
+        }
+
+        function selectMetric(metricKey) {
+            selectedMetric = metricKey;
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+            document.getElementById(`card-${metricKey === 'v_liq' ? 'v_liq' : metricKey}`).classList.add('selected');
+            applyFilters();
+        }
+
+        function renderMainChart(monthlyMetrics) {
+            let ctx = document.getElementById('chartMain').getContext('2d');
+
+            let labels = monthlyMetrics.map(m => m.m_nome || m.dt);
+            let values = monthlyMetrics.map(m => m[selectedMetric]);
+
+            let momValues = [0];
+            for(let i=1; i<monthlyMetrics.length; i++) {
+                let prev = monthlyMetrics[i-1][selectedMetric];
+                let curr = monthlyMetrics[i][selectedMetric];
+                let mom = prev > 0 ? ((curr - prev) / prev) * 100 : 0;
+                momValues.push(mom);
+            }
+
+            let metricTitles = {
+                'v_liq': 'Faturamento Líquido (R$)',
+                'pos': 'Positivação Total (Clientes)',
+                'vol': 'Volume (KG)',
+                'tkt': 'Ticket Médio (R$)',
+                'troca': '% Troca'
+            };
+
+            document.getElementById('chart-main-title').innerText = `Evolução Mensal & % MoM - ${metricTitles[selectedMetric]}`;
+
+            if(chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: metricTitles[selectedMetric],
+                            data: values,
+                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                            borderColor: '#3b82f6',
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: '% Variação MoM',
+                            data: momValues,
+                            type: 'line',
+                            borderColor: '#06b6d4',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointBackgroundColor: '#06b6d4',
+                            pointRadius: 4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#9ca3af' } } },
+                    scales: {
+                        x: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y: { type: 'linear', position: 'left', ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y1: { type: 'linear', position: 'right', ticks: { color: '#06b6d4', callback: v => v.toFixed(1) + '%' }, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+        }
+
+        function renderRepresentatividade(monthsSorted) {
+            let totalFatGeral = filteredData.reduce((a,b) => a + b.v_liq, 0);
+            let numMeses = Math.max(monthsSorted.length, 1);
+
+            // FORNECEDORES
+            let fornsData = {};
+            filteredData.forEach(d => {
+                if(!d.forn) return;
+                if(!fornsData[d.forn]) fornsData[d.forn] = { totalFat: 0, monthFat: {}, monthPos: {} };
+                fornsData[d.forn].totalFat += d.v_liq;
+                fornsData[d.forn].monthFat[d.dt] = (fornsData[d.forn].monthFat[d.dt] || 0) + d.v_liq;
+                if(!fornsData[d.forn].monthPos[d.dt]) fornsData[d.forn].monthPos[d.dt] = new Set();
+                if(d.cli) fornsData[d.forn].monthPos[d.dt].add(d.cli);
+            });
+
+            let fornsList = Object.keys(fornsData).map(f => {
+                let item = fornsData[f];
+                let avgFat = item.totalFat / numMeses;
+                
+                let posList = monthsSorted.map(m => item.monthPos[m] ? item.monthPos[m].size : 0);
+                let avgPos = posList.reduce((a,b)=>a+b, 0) / numMeses;
+
+                let fatList = monthsSorted.map(m => item.monthFat[m] || 0);
+                // Mesmo critério dos cards: último mês contra o mês anterior.
+                let avgMom = calcLatestMoMFromList(fatList);
+                let rep = totalFatGeral > 0 ? (item.totalFat / totalFatGeral)*100 : 0;
+
+                return { nome: f, avgFat, avgPos, avgMom, rep, fatList };
+            }).sort((a,b) => b.avgFat - a.avgFat);
+
+            let tbodyF = document.getElementById('tbody-fornecedores');
+            tbodyF.innerHTML = fornsList.map(f => `
+                <tr>
+                    <td><strong>${f.nome}</strong></td>
+                    <td>${formatCurr(f.avgFat)}</td>
+                    <td>${Math.round(f.avgPos)}</td>
+                    <td><span style="color: ${f.avgMom >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${f.avgMom >= 0 ? '+' : ''}${f.avgMom.toFixed(1)}%</span></td>
+                    <td style="width: 110px;">
+                        <div>${f.rep.toFixed(1)}%</div>
+                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${f.rep}%;"></div></div>
+                    </td>
+                </tr>
+            `).join('');
+
+            // VENDEDORES
+            let vendsData = {};
+            filteredData.forEach(d => {
+                if(!d.vend) return;
+                if(!vendsData[d.vend]) vendsData[d.vend] = { totalFat: 0, monthFat: {}, monthPos: {} };
+                vendsData[d.vend].totalFat += d.v_liq;
+                vendsData[d.vend].monthFat[d.dt] = (vendsData[d.vend].monthFat[d.dt] || 0) + d.v_liq;
+                if(!vendsData[d.vend].monthPos[d.dt]) vendsData[d.vend].monthPos[d.dt] = new Set();
+                if(d.cli) vendsData[d.vend].monthPos[d.dt].add(d.cli);
+            });
+
+            let vendsList = Object.keys(vendsData).map(v => {
+                let item = vendsData[v];
+                let avgFat = item.totalFat / numMeses;
+                
+                let posList = monthsSorted.map(m => item.monthPos[m] ? item.monthPos[m].size : 0);
+                let avgPos = posList.reduce((a,b)=>a+b, 0) / numMeses;
+
+                let fatList = monthsSorted.map(m => item.monthFat[m] || 0);
+                // Mesmo critério dos cards: último mês contra o mês anterior.
+                let avgMom = calcLatestMoMFromList(fatList);
+                let rep = totalFatGeral > 0 ? (item.totalFat / totalFatGeral)*100 : 0;
+
+                return { nome: v, avgFat, avgPos, avgMom, rep, fatList };
+            }).sort((a,b) => b.avgFat - a.avgFat);
+
+            let tbodyV = document.getElementById('tbody-vendedores');
+            tbodyV.innerHTML = vendsList.map(v => `
+                <tr>
+                    <td><strong>${v.nome}</strong></td>
+                    <td>${formatCurr(v.avgFat)}</td>
+                    <td>${Math.round(v.avgPos)}</td>
+                    <td><span style="color: ${v.avgMom >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${v.avgMom >= 0 ? '+' : ''}${v.avgMom.toFixed(1)}%</span></td>
+                    <td style="width: 110px;">
+                        <div>${v.rep.toFixed(1)}%</div>
+                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${v.rep}%;"></div></div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        let currentGeoList = [];
+
+        function normalizeCityFull(value) {
+            return String(value || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, ' ')
+                .trim();
+        }
+
+        // Separa o nome da cidade da UF quando o texto termina com
+        // " - BA", "(BA)", "BA" etc. — só se o final for uma UF válida.
+        // Ex.: "Ruy Barbosa - RN" -> { city: 'ruy barbosa', uf: 'rn' }.
+        function splitCityUf(value) {
+            const full = normalizeCityFull(value);
+            const match = full.match(/\s+([a-z]{2})$/);
+
+            if (match && UFS_VALIDAS.has(match[1])) {
+                return { city: full.slice(0, full.length - 3).trim(), uf: match[1] };
+            }
+
+            return { city: full, uf: '' };
+        }
+
+        // Indexa as populações por nome-base. Cada homônimo mantém a própria UF,
+        // então "Ruy Barbosa - RN" e "Ruy Barbosa - BA" deixam de ser misturadas.
+        function indexPopulations(map) {
+            const index = {};
+
+            for (const [nome, valor] of Object.entries(map || {})) {
+                const pop = Number(valor) || 0;
+                if (pop <= 0) continue;
+
+                const { city, uf } = splitCityUf(nome);
+                if (!city) continue;
+
+                if (!index[city]) index[city] = [];
+                if (!index[city].some(entry => entry.uf === uf)) {
+                    index[city].push({ uf: uf, pop: pop });
+                }
+            }
+
+            return index;
+        }
+
+        function resolvePopulationEntry(entradas) {
+            if (!entradas || entradas.length === 0) return null;
+
+            if (entradas.length === 1) return entradas[0];
+
+            // Todas as cidades atendidas são da BA: homônimos resolvem para BA.
+            const padrao = entradas.find(entry => entry.uf === UF_PADRAO);
+            if (padrao) return padrao;
+
+            // Fallback: UF mais comum nos próprios dados.
+            if (dominantUfGlobal) {
+                const dominante = entradas.find(entry => entry.uf === dominantUfGlobal);
+                if (dominante) return dominante;
+            }
+
+            // Último recurso: mantém a cidade de maior população.
+            return entradas.reduce((maior, atual) => (atual.pop > maior.pop ? atual : maior));
+        }
+
+        function lookupPopulationIndex(index, base, dataUf) {
+            const entradas = index ? index[base] : null;
+            if (!entradas || entradas.length === 0) return null;
+
+            // Se o próprio nome traz a UF (ex.: "RUY BARBOSA (BA)"),
+            // casa exatamente com a UF correspondente.
+            if (dataUf) {
+                const exata = entradas.find(entry => entry.uf === dataUf);
+                if (exata) return exata;
+            }
+
+            return resolvePopulationEntry(entradas);
+        }
+
+        function getPopulationForCity(city) {
+            const { city: base, uf: dataUf } = splitCityUf(city);
+
+            const procurarEmTodos = chaveBase => {
+                // Prioridade 1: valor informado manualmente no populacoes.csv.
+                const doCsv = lookupPopulationIndex(populationsCsvIndex, chaveBase, dataUf);
+                if (doCsv) return doCsv;
+
+                // Prioridade 2: IBGE consultado direto no navegador (UF-aware).
+                const doIbgeDireto = lookupPopulationIndex(populationsIbgeDiretoIndex, chaveBase, dataUf);
+                if (doIbgeDireto) return doIbgeDireto;
+
+                // Prioridade 3: populações embutidas nos JSONs (fallback offline).
+                return lookupPopulationIndex(populationsJsonIndex, chaveBase, dataUf);
+            };
+
+            // 1ª tentativa: nome sem a UF final (ex.: "RUY BARBOSA (BA)" -> "ruy barbosa").
+            const comUf = procurarEmTodos(base);
+            if (comUf) return comUf.pop;
+
+            // 2ª tentativa: nome completo normalizado. Protege cidades cujo nome
+            // termina com uma palavra de 2 letras que não é UF (ex.: "SANTA INES").
+            if (dataUf) {
+                const nomeCompleto = procurarEmTodos(normalizeCityFull(city));
+                if (nomeCompleto) return nomeCompleto.pop;
+            }
+
+            // Fallback somente quando não existe em nenhuma fonte.
+            return 12500;
+        }
+
+        function renderGeoPerformance(monthsSorted) {
+            let cityMonthMap = {};
+            filteredData.forEach(d => {
+                if(!d.cid) return;
+                if(!cityMonthMap[d.cid]) cityMonthMap[d.cid] = {};
+                if(!cityMonthMap[d.cid][d.dt]) cityMonthMap[d.cid][d.dt] = new Set();
+                if(d.cli) cityMonthMap[d.cid][d.dt].add(d.cli);
+            });
+
+            currentGeoList = [];
+            Object.keys(cityMonthMap).forEach(cid => {
+                let pop = getPopulationForCity(cid);
+                let potencial = pop / 1000;
+
+                let posList = monthsSorted.map(m => cityMonthMap[cid][m] ? cityMonthMap[cid][m].size : 0);
+                let avgPos = posList.length > 0 ? posList.reduce((a,b)=>a+b,0) / posList.length : 0;
+                let pctGeo = potencial > 0 ? (avgPos / potencial) * 100 : 0;
+
+                // Crescimento geográfico usa exatamente o mesmo MoM do restante do painel.
+                let momGeo = calcLatestMoMFromList(posList);
+
+                currentGeoList.push({
+                    cidade: cid, pop: pop, potencial: potencial, avgPos: avgPos, momGeo: momGeo, pctGeo: pctGeo
+                });
+            });
+
+            renderGeoSummary();
+            sortAndRenderGeoTable();
+        }
+
+        function renderGeoSummary() {
+            const totalCidades = currentGeoList.length;
+
+            const totalPop = currentGeoList.reduce((a, g) => a + g.pop, 0);
+            const totalPot = currentGeoList.reduce((a, g) => a + g.potencial, 0);
+            const totalPos = currentGeoList.reduce((a, g) => a + g.avgPos, 0);
+            const pctGeral = totalPot > 0 ? (totalPos / totalPot) * 100 : 0;
+
+            // Mesmos cortes do farol da tabela.
+            const excelentes = currentGeoList.filter(g => g.pctGeo >= 75).length;
+            const amarelas = currentGeoList.filter(g => g.pctGeo >= 50.01 && g.pctGeo < 75).length;
+            const vermelhas = currentGeoList.filter(g => g.pctGeo < 50).length;
+            const abaixoPotencial = amarelas + vermelhas;
+
+            const pctGeralColor = pctGeral >= 75
+                ? 'var(--accent-green)'
+                : (pctGeral >= 50.01 ? 'var(--accent-yellow)' : 'var(--accent-red)');
+
+            document.getElementById('geo-summary').innerHTML = `
+                <div class="geo-sum-card">
+                    <span class="geo-sum-label">Cidades no Filtro</span>
+                    <span class="geo-sum-value">${totalCidades.toLocaleString('pt-BR')}</span>
+                    <span class="geo-sum-sub">${excelentes} em nível excelente</span>
+                </div>
+                <div class="geo-sum-card">
+                    <span class="geo-sum-label">População Total</span>
+                    <span class="geo-sum-value">${totalPop.toLocaleString('pt-BR')} hab</span>
+                    <span class="geo-sum-sub">soma das cidades do filtro</span>
+                </div>
+                <div class="geo-sum-card">
+                    <span class="geo-sum-label">Potencial Total</span>
+                    <span class="geo-sum-value">${totalPot.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}</span>
+                    <span class="geo-sum-sub">clientes (1 / 1.000 hab)</span>
+                </div>
+                <div class="geo-sum-card">
+                    <span class="geo-sum-label">Positivação Média Total</span>
+                    <span class="geo-sum-value">${totalPos.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}</span>
+                    <span class="geo-sum-sub">soma das médias por cidade</span>
+                </div>
+                <div class="geo-sum-card">
+                    <span class="geo-sum-label">% GeoPerformance Geral</span>
+                    <span class="geo-sum-value" style="color: ${pctGeralColor};">${pctGeral.toFixed(1)}%</span>
+                    <span class="geo-sum-sub">positivação / potencial</span>
+                </div>
+                <div class="geo-sum-card">
+                    <span class="geo-sum-label">Cidades Abaixo do Potencial</span>
+                    <span class="geo-sum-value" style="color: var(--accent-red);">${abaixoPotencial}</span>
+                    <span class="geo-sum-sub">
+                        <span style="color: var(--accent-yellow); font-weight: 600;">${amarelas} em amarelo (50-75%)</span><br>
+                        <span style="color: var(--accent-red); font-weight: 600;">${vermelhas} em vermelho (&lt;50%)</span>
+                    </span>
+                </div>
+            `;
+        }
+
+        function sortGeoTable(criteria) {
+            geoSortBy = criteria;
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-sort-${criteria}`).classList.add('active');
+            sortAndRenderGeoTable();
+        }
+
+        function sortAndRenderGeoTable() {
+            if(geoSortBy === 'nome') currentGeoList.sort((a,b) => a.cidade.localeCompare(b.cidade));
+            else if(geoSortBy === 'pop') currentGeoList.sort((a,b) => b.pop - a.pop);
+            else if(geoSortBy === 'geo') currentGeoList.sort((a,b) => b.pctGeo - a.pctGeo);
+            else currentGeoList.sort((a,b) => b.potencial - a.potencial);
+
+            let tbodyGeo = document.getElementById('tbody-geo');
+            tbodyGeo.innerHTML = currentGeoList.map(g => {
+                let statusClass = 'status-red';
+                let statusLabel = '<50% (Crítico)';
+                if(g.pctGeo >= 75) { statusClass = 'status-green'; statusLabel = '>=75% (Excelente)'; }
+                else if(g.pctGeo >= 50.01) { statusClass = 'status-yellow'; statusLabel = '50%-75% (Atenção)'; }
+
+                return `
+                    <tr>
+                        <td><strong>${g.cidade}</strong></td>
+                        <td>${g.pop.toLocaleString('pt-BR')} hab</td>
+                        <td><strong>${g.potencial.toFixed(1)}</strong></td>
+                        <td>${g.avgPos.toFixed(1)}</td>
+                        <td><span style="color: ${g.momGeo >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${g.momGeo >= 0 ? '+' : ''}${g.momGeo.toFixed(1)}%</span></td>
+                        <td><strong>${g.pctGeo.toFixed(1)}%</strong></td>
+                        <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ===================== ANÁLISE DE PRODUTOS =====================
+
+        function setProdCurveFilter(curva) {
+            produtosCurveFilter = curva;
+            document.querySelectorAll('#view-prod .sort-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-curve-${curva}`).classList.add('active');
+            renderProdutosTable();
+        }
+
+        function renderProdutos(monthsSorted) {
+            const numMeses = Math.max(monthsSorted.length, 1);
+            const totalFatGeral = filteredData.reduce((a, b) => a + (Number(b.v_liq) || 0), 0);
+            const temProd = filteredData.some(d => d.prod);
+            const temQtd = filteredData.some(d => d.qtd !== undefined && d.qtd !== null);
+
+            currentProdList = [];
+
+            if (temProd) {
+                const prodMap = {};
+                filteredData.forEach(d => {
+                    if (!d.prod) return;
+                    if (!prodMap[d.prod]) {
+                        prodMap[d.prod] = { totalFat: 0, totalQtd: 0, monthFat: {}, monthQtd: {}, monthPos: {} };
+                    }
+                    const item = prodMap[d.prod];
+                    const fat = Number(d.v_liq) || 0;
+                    const qtd = Number(d.qtd) || 0;
+                    item.totalFat += fat;
+                    item.totalQtd += qtd;
+                    item.monthFat[d.dt] = (item.monthFat[d.dt] || 0) + fat;
+                    item.monthQtd[d.dt] = (item.monthQtd[d.dt] || 0) + qtd;
+                    if (!item.monthPos[d.dt]) item.monthPos[d.dt] = new Set();
+                    if (d.cli) item.monthPos[d.dt].add(d.cli);
+                });
+
+                let lista = Object.keys(prodMap).map(nome => {
+                    const item = prodMap[nome];
+                    const fatList = monthsSorted.map(m => item.monthFat[m] || 0);
+                    const qtdList = monthsSorted.map(m => item.monthQtd[m] || 0);
+                    const posList = monthsSorted.map(m => item.monthPos[m] ? item.monthPos[m].size : 0);
+
+                    return {
+                        nome: nome,
+                        totalFat: item.totalFat,
+                        avgFat: item.totalFat / numMeses,
+                        avgQtd: temQtd ? item.totalQtd / numMeses : null,
+                        avgPos: posList.reduce((a, b) => a + b, 0) / numMeses,
+                        momQtd: temQtd ? calcLatestMoMFromList(qtdList) : null,
+                        rep: totalFatGeral > 0 ? (item.totalFat / totalFatGeral) * 100 : 0
+                    };
+                }).sort((a, b) => b.totalFat - a.totalFat);
+
+                // Curva ABC (Pareto 80/95): quem cruza a linha de 80% ainda é A;
+                // quem cruza a linha de 95% ainda é B; o restante é C.
+                const baseFat = lista.reduce((a, p) => a + p.totalFat, 0);
+                let acumulado = 0;
+                lista.forEach((p, idx) => {
+                    const antes = acumulado;
+                    if (baseFat > 0) acumulado += (p.totalFat / baseFat) * 100;
+                    p.curva = antes < 80 ? 'A' : (antes < 95 ? 'B' : 'C');
+                    p.rank = idx + 1;
+                });
+
+                currentProdList = lista;
+            }
+
+            renderProdSummary(numMeses, totalFatGeral, temProd, temQtd);
+            renderProdutosTable(temProd);
+        }
+
+        function renderProdSummary(numMeses, totalFatGeral, temProd, temQtd) {
+            const totalProdutos = currentProdList.length;
+            const counts = { A: 0, B: 0, C: 0 };
+            const reps = { A: 0, B: 0, C: 0 };
+            let totalQtd = 0;
+
+            currentProdList.forEach(p => {
+                counts[p.curva]++;
+                reps[p.curva] += p.rep;
+                if (p.avgQtd !== null) totalQtd += p.avgQtd;
+            });
+
+            document.getElementById('prod-summary').innerHTML = `
+                <div class="geo-sum-card">
+                    <span class="geo-sum-label">Produtos no Filtro</span>
+                    <span class="geo-sum-value">${totalProdutos.toLocaleString('pt-BR')}</span>
+                    <span class="geo-sum-sub">itens distintos no período</span>
+                </div>
+                <div class="geo-sum-card">
+                    <span class="geo-sum-label">Fat. Médio Mensal</span>
+                    <span class="geo-sum-value">${formatCurr(totalFatGeral / numMeses)}</span>
+                    <span class="geo-sum-sub">total do filtro / nº de meses</span>
+                </div>
+                <div class="geo-sum-card">
+                    <span class="geo-sum-label">Qtd. Média Mensal</span>
+                    <span class="geo-sum-value">${temQtd && temProd ? formatNum(totalQtd) : '-'}</span>
+                    <span class="geo-sum-sub">soma das quantidades médias</span>
+                </div>
+                <div class="geo-sum-card">
+                    <span class="geo-sum-label">Curva A</span>
+                    <span class="geo-sum-value" style="color: var(--accent-green);">${counts.A}</span>
+                    <span class="geo-sum-sub">${reps.A.toFixed(1)}% do faturamento</span>
+                </div>
+                <div class="geo-sum-card">
+                    <span class="geo-sum-label">Curva B</span>
+                    <span class="geo-sum-value" style="color: var(--accent-yellow);">${counts.B}</span>
+                    <span class="geo-sum-sub">${reps.B.toFixed(1)}% do faturamento</span>
+                </div>
+                <div class="geo-sum-card">
+                    <span class="geo-sum-label">Curva C</span>
+                    <span class="geo-sum-value" style="color: var(--accent-red);">${counts.C}</span>
+                    <span class="geo-sum-sub">${reps.C.toFixed(1)}% do faturamento</span>
+                </div>
+            `;
+        }
+
+        function renderProdutosTable(temProd) {
+            let tbodyProd = document.getElementById('tbody-produtos');
+
+            if (!temProd) {
+                tbodyProd.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 24px; color: var(--accent-yellow);">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            Campo de produto ("prod") não encontrado nos JSONs. Rode o Python atualizado
+                            (que gera os campos "prod" e "qtd") para habilitar esta aba.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const listaFiltrada = produtosCurveFilter === 'todas'
+                ? currentProdList
+                : currentProdList.filter(p => p.curva === produtosCurveFilter);
+
+            if (!listaFiltrada.length) {
+                tbodyProd.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                            Nenhum produto nesta curva com os filtros selecionados.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbodyProd.innerHTML = listaFiltrada.map(p => {
+                const curvaClass = p.curva === 'A' ? 'status-green' : (p.curva === 'B' ? 'status-yellow' : 'status-red');
+                const qtdCell = p.avgQtd === null ? '-' : formatNum(p.avgQtd);
+                const momCell = p.momQtd === null
+                    ? '-'
+                    : `<span style="color: ${p.momQtd >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${p.momQtd >= 0 ? '+' : ''}${p.momQtd.toFixed(1)}%</span>`;
+
+                return `
+                    <tr>
+                        <td>${p.rank}</td>
+                        <td><strong>${p.nome}</strong></td>
+                        <td><span class="status-badge ${curvaClass}">Curva ${p.curva}</span></td>
+                        <td>${formatCurr(p.avgFat)}</td>
+                        <td>${p.avgPos.toFixed(1)}</td>
+                        <td>${qtdCell}</td>
+                        <td>${momCell}</td>
+                        <td style="width: 110px;">
+                            <div>${p.rep.toFixed(1)}%</div>
+                            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${Math.min(p.rep, 100)}%;"></div></div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // =================== FIM ANÁLISE DE PRODUTOS ===================
+
+        function createWeeklyChart(canvasId, labels, values, label, color, formatter) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return null;
+
+            return new Chart(canvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: values,
+                        borderColor: color,
+                        backgroundColor: color + '26',
+                        pointBackgroundColor: color,
+                        pointRadius: 3,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#9ca3af' } } },
+                    scales: {
+                        x: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y: { ticks: { color: color, callback: formatter }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    }
+                }
+            });
+        }
+
+        function renderWeeklyInsight(weeksSorted, fatVals, posVals, volVals, novos, churn, hasSixMonths) {
+            const element = document.getElementById('weekly-insight');
+            if (!element) return;
+
+            if (!weeksSorted.length) {
+                element.innerHTML = '<strong><i class="fa-solid fa-lightbulb"></i> Insight da análise filtrada:</strong> Não há dados para os filtros selecionados.';
+                return;
+            }
+
+            const firstFat = fatVals[0] || 0;
+            const lastFat = fatVals[fatVals.length - 1] || 0;
+            const fatChange = firstFat > 0 ? ((lastFat - firstFat) / firstFat) * 100 : 0;
+            const firstPos = posVals[0] || 0;
+            const lastPos = posVals[posVals.length - 1] || 0;
+            const posChange = firstPos > 0 ? ((lastPos - firstPos) / firstPos) * 100 : 0;
+            const firstVol = volVals[0] || 0;
+            const lastVol = volVals[volVals.length - 1] || 0;
+            const volChange = firstVol > 0 ? ((lastVol - firstVol) / firstVol) * 100 : 0;
+
+            let direction = fatChange >= 0 ? 'crescimento' : 'queda';
+            let explanation = '';
+            let recommendation = '';
+
+            if (fatChange < 0 && posChange < 0) {
+                explanation = 'O faturamento e a quantidade de clientes positivados recuaram juntos, indicando perda de cobertura comercial no período filtrado.';
+                recommendation = 'Priorize a reativação dos clientes que deixaram de comprar e uma rotina de visitas nos vendedores ou cidades com maior queda.';
+            } else if (fatChange < 0 && posChange >= 0) {
+                explanation = 'O faturamento caiu mesmo com a positivação estável ou maior; isso sugere redução de ticket médio, mix ou volume por cliente.';
+                recommendation = 'Avalie o mix vendido, o ticket por cliente e oportunidades de venda adicional antes de ampliar a base.';
+            } else if (fatChange >= 0 && posChange < 0) {
+                explanation = 'O faturamento cresceu com menos clientes, sinalizando concentração em clientes de maior compra.';
+                recommendation = 'Proteja os principais clientes, mas trabalhe a recuperação da base para reduzir dependência e ampliar a distribuição.';
+            } else {
+                explanation = 'Faturamento e positivação evoluíram na mesma direção, indicando ganho ou perda de cobertura acompanhado pelo resultado financeiro.';
+                recommendation = 'Replique as práticas dos períodos e segmentos que apresentaram melhor desempenho e acompanhe a conversão semanal.';
+            }
+
+            const churnText = hasSixMonths
+                ? `${churn.toLocaleString('pt-BR')} clientes ficaram sem comprar no recorte recente, enquanto ${novos.toLocaleString('pt-BR')} novos clientes foram identificados nos últimos 3 meses.`
+                : 'O recorte selecionado tem menos de 6 meses; a comparação completa de novos clientes e churn exige pelo menos 6 meses.';
+
+            element.innerHTML = `<strong><i class="fa-solid fa-lightbulb"></i> Insight da análise filtrada:</strong>
+                ${explanation} Faturamento: <strong>${fatChange >= 0 ? '+' : ''}${fatChange.toFixed(1)}%</strong>; positivação: <strong>${posChange >= 0 ? '+' : ''}${posChange.toFixed(1)}%</strong>; volume: <strong>${volChange >= 0 ? '+' : ''}${volChange.toFixed(1)}%</strong>.
+                ${churnText} <strong>Direcionamento:</strong> ${recommendation}`;
+        }
+
+        function parseRecordDate(record) {
+            const value = record && (record.data || record.date || record.emissao);
+            if (!value) return null;
+            const text = String(value).slice(0, 10);
+            return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : null;
+        }
+
+        function dateToUtc(dateText) {
+            const parts = String(dateText || '').split('-').map(Number);
+            if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
+            return new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+        }
+
+        function utcToDateInput(date) {
+            return date.toISOString().slice(0, 10);
+        }
+
+        function addDays(date, amount) {
+            const result = new Date(date.getTime());
+            result.setUTCDate(result.getUTCDate() + amount);
+            return result;
+        }
+
+        function getWeeklyFilterData() {
+            const meses = getSelectedValues('flt-mes');
+            const gerentes = getSelectedValues('flt-gerente');
+            const sups = getSelectedValues('flt-supervisor');
+            const cidades = getSelectedValues('flt-cidade');
+            const forns = getSelectedValues('flt-fornecedor');
+            const vends = getSelectedValues('flt-vendedor');
+            const subs = getSelectedValues('flt-subgrupo');
+
+            // Não aplica o filtro mensal aqui: o calendário precisa conseguir
+            // buscar também os 90 dias anteriores ao período selecionado.
+            return rawData.filter(d => {
+                if (gerentes.length > 0 && !gerentes.includes(d.ger)) return false;
+                if (sups.length > 0 && !sups.includes(d.sup)) return false;
+                if (cidades.length > 0 && !cidades.includes(d.cid)) return false;
+                if (forns.length > 0 && !forns.includes(d.forn)) return false;
+                if (vends.length > 0 && !vends.includes(d.vend)) return false;
+                if (subs.length > 0 && !subs.includes(d.sub)) return false;
+                return true;
+            });
+        }
+
+        function ensureWeeklyDateDefaults(data) {
+            const dates = data.map(parseRecordDate).filter(Boolean).sort();
+            if (!dates.length) return null;
+
+            const endInput = document.getElementById('weekly-end-date');
+            const startInput = document.getElementById('weekly-start-date');
+            const currentEnd = endInput.value;
+            const currentStart = startInput.value;
+
+            const latest = dateToUtc(dates[dates.length - 1]);
+            const earliest = dateToUtc(dates[0]);
+            const defaultStart = addDays(latest, -89);
+            const start = currentStart ? dateToUtc(currentStart) : (defaultStart < earliest ? earliest : defaultStart);
+            const end = currentEnd ? dateToUtc(currentEnd) : latest;
+
+            if (!currentStart) startInput.value = utcToDateInput(start);
+            if (!currentEnd) endInput.value = utcToDateInput(end);
+            startInput.min = dates[0];
+            startInput.max = dates[dates.length - 1];
+            endInput.min = dates[0];
+            endInput.max = dates[dates.length - 1];
+            return { start, end, earliest, latest };
+        }
+
+        function getWeeklyPeriod(data) {
+            const defaults = ensureWeeklyDateDefaults(data);
+            if (!defaults) return null;
+
+            let start = dateToUtc(document.getElementById('weekly-start-date').value);
+            let end = dateToUtc(document.getElementById('weekly-end-date').value);
+            if (!start || !end) return null;
+
+            if (start > end) {
+                const swap = start;
+                start = end;
+                end = swap;
+                document.getElementById('weekly-start-date').value = utcToDateInput(start);
+                document.getElementById('weekly-end-date').value = utcToDateInput(end);
+            }
+
+            return { start, end, previousStart: addDays(start, -90), previousEnd: addDays(end, -90) };
+        }
+
+        function aggregateWeekly(data, start, end) {
+            const groups = {};
+            data.forEach(d => {
+                const dateText = parseRecordDate(d);
+                const date = dateToUtc(dateText);
+                if (!date || date < start || date > end) return;
+                const week = d.sem || dateText;
+                if (!groups[week]) groups[week] = { fat: 0, vol: 0, clis: new Set() };
+                groups[week].fat += Number(d.v_liq) || 0;
+                groups[week].vol += Number(d.p_liq) || 0;
+                if (d.cli) groups[week].clis.add(d.cli);
+            });
+            return groups;
+        }
+
+        function aggregatePeriod(data, start, end) {
+            let fat = 0;
+            let vol = 0;
+            const clients = new Set();
+            data.forEach(d => {
+                const date = dateToUtc(parseRecordDate(d));
+                if (!date || date < start || date > end) return;
+                fat += Number(d.v_liq) || 0;
+                vol += Number(d.p_liq) || 0;
+                if (d.cli) clients.add(d.cli);
+            });
+            return { fat, vol, pos: clients.size };
+        }
+
+        function growthPercent(current, previous) {
+            if (!previous) return 0;
+            return ((current - previous) / Math.abs(previous)) * 100;
+        }
+
+        function updateWeeklyGrowth(id, value) {
+            const element = document.getElementById(id);
+            element.innerText = `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+            element.style.color = value >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+        }
+
+        function onWeeklyDateChange() {
+            const start = document.getElementById('weekly-start-date').value;
+            const end = document.getElementById('weekly-end-date').value;
+            if (start && end && start > end) {
+                document.getElementById('weekly-end-date').value = start;
+            }
+            renderEvolucaoSemanal();
+        }
+
+        function resetWeeklyDates() {
+            document.getElementById('weekly-start-date').value = '';
+            document.getElementById('weekly-end-date').value = '';
+            renderEvolucaoSemanal();
+        }
+
+        function renderEvolucaoSemanal() {
+            const weeklyData = getWeeklyFilterData();
+            const period = getWeeklyPeriod(weeklyData);
+            if (!period) return;
+
+            const currentGroups = aggregateWeekly(weeklyData, period.start, period.end);
+            const weeksSorted = Object.keys(currentGroups).sort();
+            const fatVals = weeksSorted.map(w => currentGroups[w].fat);
+            const posVals = weeksSorted.map(w => currentGroups[w].clis.size);
+            const volVals = weeksSorted.map(w => currentGroups[w].vol);
+
+            if (chartSemFatInstance) chartSemFatInstance.destroy();
+            if (chartSemPosInstance) chartSemPosInstance.destroy();
+            if (chartSemVolInstance) chartSemVolInstance.destroy();
+
+            chartSemFatInstance = createWeeklyChart('chartSemFat', weeksSorted, fatVals, 'Faturamento Líquido (R$)', '#3b82f6', value => formatCurr(value));
+            chartSemPosInstance = createWeeklyChart('chartSemPos', weeksSorted, posVals, 'Clientes positivados', '#10b981', value => Number(value).toLocaleString('pt-BR'));
+            chartSemVolInstance = createWeeklyChart('chartSemVol', weeksSorted, volVals, 'Volume (KG)', '#8b5cf6', value => formatNum(value));
+
+            const current = aggregatePeriod(weeklyData, period.start, period.end);
+            const previous = aggregatePeriod(weeklyData, period.previousStart, period.previousEnd);
+            const fatGrowth = growthPercent(current.fat, previous.fat);
+            const posGrowth = growthPercent(current.pos, previous.pos);
+            const volGrowth = growthPercent(current.vol, previous.vol);
+
+            updateWeeklyGrowth('weekly-fat-growth', fatGrowth);
+            updateWeeklyGrowth('weekly-pos-growth', posGrowth);
+            updateWeeklyGrowth('weekly-vol-growth', volGrowth);
+
+            const status = document.getElementById('weekly-date-status');
+            status.innerText = `${utcToDateInput(period.start)} a ${utcToDateInput(period.end)} | comparação: 90 dias anteriores`;
+
+            const selectedMonths = Array.from(new Set(weeklyData.map(d => d.dt).filter(Boolean))).sort();
+            const hasSixMonths = selectedMonths.length >= 6;
+            let novos3m = 0;
+            let churnCount = 0;
+            let churnPct = 0;
+
+            if (hasSixMonths) {
+                const last3Months = selectedMonths.slice(-3);
+                const prev3Months = selectedMonths.slice(-6, -3);
+                const last3Clis = new Set(weeklyData.filter(d => last3Months.includes(d.dt) && d.cli).map(d => d.cli));
+                const prev3Clis = new Set(weeklyData.filter(d => prev3Months.includes(d.dt) && d.cli).map(d => d.cli));
+                const olderClis = new Set(weeklyData.filter(d => !last3Months.includes(d.dt) && !prev3Months.includes(d.dt) && d.cli).map(d => d.cli));
+                novos3m = Array.from(last3Clis).filter(c => !prev3Clis.has(c) && !olderClis.has(c)).length;
+                const historicalClis = new Set(weeklyData.filter(d => d.cli).map(d => d.cli));
+                churnCount = Array.from(historicalClis).filter(c => !last3Clis.has(c)).length;
+                churnPct = historicalClis.size ? (churnCount / historicalClis.size) * 100 : 0;
+                document.getElementById('val-prev-3m').innerText = prev3Clis.size.toLocaleString('pt-BR');
+            } else {
+                document.getElementById('val-prev-3m').innerText = '-';
+            }
+
+            document.getElementById('val-novos-3m').innerText = hasSixMonths ? novos3m.toLocaleString('pt-BR') : 'Dados < 6 meses';
+            document.getElementById('val-churn').innerText = hasSixMonths ? churnCount.toLocaleString('pt-BR') : 'Dados < 6 meses';
+            document.getElementById('val-churn-pct').innerText = hasSixMonths ? churnPct.toFixed(1) + '%' : '-';
+
+            renderWeeklyInsight(weeksSorted, fatVals, posVals, volVals, novos3m, churnCount, hasSixMonths);
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('btn-tab-geral').classList.toggle('active', tab==='geral');
+            document.getElementById('btn-tab-geo').classList.toggle('active', tab==='geo');
+            document.getElementById('btn-tab-sem').classList.toggle('active', tab==='sem');
+            document.getElementById('btn-tab-prod').classList.toggle('active', tab==='prod');
+
+            document.getElementById('view-geral').classList.toggle('active', tab==='geral');
+            document.getElementById('view-geo').classList.toggle('active', tab==='geo');
+            document.getElementById('view-sem').classList.toggle('active', tab==='sem');
+            document.getElementById('view-prod').classList.toggle('active', tab==='prod');
+        }
+
+        function formatCurr(val) { return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+        function formatNum(val) { return val.toLocaleString('pt-BR', { maximumFractionDigits: 1 }); }
+
+        window.onload = loadDashboardData;
+    </script>
+
+    <script>
+        /* ================================================================
+           FILTROS: BUSCA + LISTA + SELEÇÃO MÚLTIPLA
+           Os selects originais permanecem ocultos e continuam alimentando
+           applyFilters(), getSelectedValues() e resetFilters().
+        ================================================================ */
+        const SEARCHABLE_FILTER_IDS = [
+            'flt-mes', 'flt-gerente', 'flt-supervisor', 'flt-cidade',
+            'flt-fornecedor', 'flt-vendedor', 'flt-subgrupo'
+        ];
+
+        function normalizeFilterText(value) {
+            return String(value || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .trim();
+        }
+
+        function filterSummary(select) {
+            const selected = Array.from(select.options).filter(option => option.selected);
+            if (!selected.length) return 'Todos';
+            if (selected.length === 1) return selected[0].textContent;
+            return `${selected.length} selecionado(s)`;
+        }
+
+        function closeSearchableFilters(exceptPanel = null) {
+            document.querySelectorAll('.ms-panel.is-open').forEach(panel => {
+                if (panel !== exceptPanel) panel.classList.remove('is-open');
+            });
+            document.querySelectorAll('.ms-box.is-open').forEach(box => {
+                if (!exceptPanel || box.nextElementSibling !== exceptPanel) {
+                    box.classList.remove('is-open');
+                }
+            });
+        }
+
+        function buildSearchableFilter(select) {
+            if (!select || select.__searchableFilterBuilt) return;
+
+            const group = select.closest('.filter-group');
+            if (!group) return;
+
+            select.__searchableFilterBuilt = true;
+
+            const box = document.createElement('div');
+            box.className = 'ms-box';
+            box.setAttribute('role', 'button');
+            box.setAttribute('tabindex', '0');
+            box.setAttribute('aria-expanded', 'false');
+
+            const summary = document.createElement('span');
+            summary.className = 'ms-summary';
+
+            const caret = document.createElement('i');
+            caret.className = 'fa-solid fa-chevron-down ms-caret';
+
+            box.appendChild(summary);
+            box.appendChild(caret);
+
+            const panel = document.createElement('div');
+            panel.className = 'ms-panel';
+
+            const search = document.createElement('input');
+            search.type = 'search';
+            search.className = 'ms-search';
+            search.placeholder = 'Digite para buscar...';
+            search.autocomplete = 'off';
+            search.setAttribute('aria-label', 'Buscar opções');
+
+            const actions = document.createElement('div');
+            actions.className = 'ms-actions';
+
+            const selectAllButton = document.createElement('button');
+            selectAllButton.type = 'button';
+            selectAllButton.textContent = 'Marcar visíveis';
+
+            const clearButton = document.createElement('button');
+            clearButton.type = 'button';
+            clearButton.textContent = 'Limpar';
+
+            actions.appendChild(selectAllButton);
+            actions.appendChild(clearButton);
+
+            const list = document.createElement('div');
+            list.className = 'ms-list';
+
+            const count = document.createElement('div');
+            count.className = 'ms-count';
+
+            panel.appendChild(search);
+            panel.appendChild(actions);
+            panel.appendChild(list);
+            panel.appendChild(count);
+
+            group.appendChild(box);
+            group.appendChild(panel);
+
+            function refreshSummary() {
+                summary.textContent = filterSummary(select);
+                box.classList.toggle('is-active', select.selectedOptions.length > 0);
+                count.textContent = `${select.options.length} opção(ões)`;
+            }
+
+            function renderOptions() {
+                list.innerHTML = '';
+
+                Array.from(select.options).forEach(option => {
+                    const item = document.createElement('div');
+                    item.className = 'ms-item';
+                    item.dataset.search = normalizeFilterText(option.textContent);
+
+                    const check = document.createElement('span');
+                    check.className = 'ms-check';
+
+                    const text = document.createElement('span');
+                    text.className = 'ms-text';
+                    text.textContent = option.textContent;
+                    text.title = option.textContent;
+
+                    item.appendChild(check);
+                    item.appendChild(text);
+                    list.appendChild(item);
+
+                    function refreshItem() {
+                        const selected = option.selected;
+                        item.classList.toggle('is-selected', selected);
+                        check.innerHTML = selected ? '<i class="fa-solid fa-check"></i>' : '';
+                    }
+
+                    item.addEventListener('click', event => {
+                        event.preventDefault();
+                        option.selected = !option.selected;
+                        refreshItem();
+                        refreshSummary();
+                        if (typeof applyFilters === 'function') applyFilters();
+                    });
+
+                    refreshItem();
+                });
+
+                refreshSummary();
+                applySearchTerm();
+            }
+
+            function applySearchTerm() {
+                const term = normalizeFilterText(search.value);
+                list.querySelectorAll('.ms-item').forEach(item => {
+                    item.classList.toggle('hidden', Boolean(term) && !item.dataset.search.includes(term));
+                });
+            }
+
+            function openPanel() {
+                closeSearchableFilters(panel);
+                panel.classList.add('is-open');
+                box.classList.add('is-open');
+                box.setAttribute('aria-expanded', 'true');
+                search.focus();
+            }
+
+            function closePanel() {
+                panel.classList.remove('is-open');
+                box.classList.remove('is-open');
+                box.setAttribute('aria-expanded', 'false');
+            }
+
+            box.addEventListener('click', event => {
+                event.stopPropagation();
+                panel.classList.contains('is-open') ? closePanel() : openPanel();
+            });
+
+            box.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    panel.classList.contains('is-open') ? closePanel() : openPanel();
+                }
+                if (event.key === 'Escape') closePanel();
+            });
+
+            panel.addEventListener('click', event => event.stopPropagation());
+
+            search.addEventListener('input', applySearchTerm);
+            search.addEventListener('keydown', event => {
+                if (event.key === 'Escape') closePanel();
+            });
+
+            selectAllButton.addEventListener('click', () => {
+                const term = normalizeFilterText(search.value);
+                Array.from(select.options).forEach(option => {
+                    if (!term || normalizeFilterText(option.textContent).includes(term)) {
+                        option.selected = true;
+                    }
+                });
+                renderOptions();
+                if (typeof applyFilters === 'function') applyFilters();
+            });
+
+            clearButton.addEventListener('click', () => {
+                Array.from(select.options).forEach(option => option.selected = false);
+                renderOptions();
+                if (typeof applyFilters === 'function') applyFilters();
+            });
+
+            select.__refreshSearchableFilter = renderOptions;
+            renderOptions();
+        }
+
+        function initSearchableFilters() {
+            SEARCHABLE_FILTER_IDS.forEach(id => {
+                const select = document.getElementById(id);
+                if (select) buildSearchableFilter(select);
+            });
+            syncSearchableFilters();
+        }
+
+        function syncSearchableFilters() {
+            SEARCHABLE_FILTER_IDS.forEach(id => {
+                const select = document.getElementById(id);
+                if (select && select.__refreshSearchableFilter) {
+                    select.__refreshSearchableFilter();
+                }
+            });
+        }
+
+        document.addEventListener('click', event => {
+            if (!event.target.closest('.filter-group')) closeSearchableFilters();
+        });
+    </script>
+</body>
+</html>
